@@ -37,7 +37,7 @@ but if one misbehaves just run `bash` first and stay in it.
 ### 1. Install Packages
 
 QEMU, the kernel build dependencies, and a few tools the tutorial calls (`kvm-ok`, `bsdcat`, `dpkg -L nginx-common`).
-`make`, `gcc`, `unzip`, `git` and Docker are already installed.
+`make`, `gcc`, `unzip` and `git` are already installed.
 
 ```sh
 sudo apt update
@@ -62,7 +62,36 @@ sudo install -D -m0755 containerd-shim-urunc-v2_static_amd64 /usr/local/bin/cont
 cd -
 ```
 
-### 3. Workspace
+### 3. Docker 28 or Newer
+
+The Docker part of the tutorial needs Docker Engine 28 or newer. Check yours:
+
+```sh
+docker version --format '{{{{.Server.Version}}}}'
+```
+
+::remark-box
+---
+kind: warning
+---
+With older versions (Debian 13 ships 26.1.5 as `docker.io`) the unikernel container starts but has no network:
+`curl` cannot connect, and the container logs show `No network interface attached!`.
+Docker up to v27 attaches the container's network from a `prestart` OCI hook, which urunc v0.8.1 does not run.
+::
+
+To replace Debian's packages with Docker's own (existing images and containers in `/var/lib/docker` are kept; run this in `bash`):
+
+```sh
+sudo apt remove -y docker.io docker-cli docker-buildx containerd runc
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian trixie stable" | sudo tee /etc/apt/sources.list.d/docker.list
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+### 4. Workspace
 
 The playground pre-creates `nginx/` and `sources/` in the home directory.
 Here they are already created under `lab/` by `setup-workspace.sh` (pinned to the same commits as the playground).
@@ -73,7 +102,7 @@ rm -rf {LAB}
 {HERE}/setup-workspace.sh
 ```
 
-### 4. Open a Terminal in the Lab
+### 5. Open a Terminal in the Lab
 
 Everything below assumes this directory plays the role of the playground's HOME:
 
